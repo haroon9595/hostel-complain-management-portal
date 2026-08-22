@@ -20,8 +20,10 @@ import {
   Shield,
   Search,
 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export default function StaffPage() {
+  const { requireAuth } = useAuth();
   const [staff, setStaff] = useState<Staff[]>([]);
   const [hostels, setHostels] = useState<Hostel[]>([]);
   const [selectedHostelId, setSelectedHostelId] = useState<number | null>(null);
@@ -79,7 +81,7 @@ export default function StaffPage() {
     loadData();
   }, [loadData]);
 
-  const openAddModal = () => {
+  const doOpenAddModal = () => {
     setEditingStaff(null);
     setFullName("");
     setWhatsapp("");
@@ -90,7 +92,14 @@ export default function StaffPage() {
     setIsModalOpen(true);
   };
 
-  const openEditModal = (s: Staff) => {
+  const openAddModal = () => {
+    requireAuth(
+      () => doOpenAddModal(),
+      "You must sign in with authorized Warden credentials to add new staff members."
+    );
+  };
+
+  const doOpenEditModal = (s: Staff) => {
     setEditingStaff(s);
     setFullName(s.full_name);
     setWhatsapp(s.whatsapp_number);
@@ -99,6 +108,20 @@ export default function StaffPage() {
     setRoleId(s.role_id || 1);
     setBlock(s.block || "");
     setIsModalOpen(true);
+  };
+
+  const openEditModal = (s: Staff) => {
+    requireAuth(
+      () => doOpenEditModal(s),
+      `You must sign in with authorized Warden credentials to edit staff member '${s.full_name}'.`
+    );
+  };
+
+  const promptDeleteStaff = (s: Staff) => {
+    requireAuth(
+      () => setDeletingStaff(s),
+      `You must sign in with authorized Warden credentials to delete staff member '${s.full_name}'.`
+    );
   };
 
   const handleSaveStaff = async (e: React.FormEvent) => {
@@ -342,7 +365,7 @@ export default function StaffPage() {
                       <span>Edit</span>
                     </button>
                     <button
-                      onClick={() => setDeletingStaff(s)}
+                      onClick={() => promptDeleteStaff(s)}
                       className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-rose-50 text-slate-700 hover:text-rose-600 border border-slate-200 text-xs font-semibold transition-colors"
                     >
                       <Trash2 className="w-3 h-3" />

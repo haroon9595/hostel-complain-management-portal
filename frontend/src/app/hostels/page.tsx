@@ -21,8 +21,10 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 
 export default function HostelsPage() {
+  const { requireAuth } = useAuth();
   const [activeTab, setActiveTab] = useState<"hostels" | "rooms">("hostels");
   const [hostels, setHostels] = useState<Hostel[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -85,16 +87,37 @@ export default function HostelsPage() {
   }, [loadData]);
 
   // Hostel Handlers
-  const openAddHostelModal = () => {
+  const doOpenAddHostelModal = () => {
     setEditingHostel(null);
     setHostelNameInput("");
     setIsHostelModalOpen(true);
   };
 
-  const openEditHostelModal = (h: Hostel) => {
+  const openAddHostelModal = () => {
+    requireAuth(
+      () => doOpenAddHostelModal(),
+      "You must sign in with authorized Warden credentials to add residential halls."
+    );
+  };
+
+  const doOpenEditHostelModal = (h: Hostel) => {
     setEditingHostel(h);
     setHostelNameInput(h.hostel_name);
     setIsHostelModalOpen(true);
+  };
+
+  const openEditHostelModal = (h: Hostel) => {
+    requireAuth(
+      () => doOpenEditHostelModal(h),
+      `You must sign in with authorized Warden credentials to rename '${h.hostel_name}'.`
+    );
+  };
+
+  const promptDeleteHostel = (h: Hostel) => {
+    requireAuth(
+      () => setDeletingHostel(h),
+      `You must sign in with authorized Warden credentials to delete '${h.hostel_name}'.`
+    );
   };
 
   const handleSaveHostel = async (e: React.FormEvent) => {
@@ -145,7 +168,7 @@ export default function HostelsPage() {
   };
 
   // Room Handlers
-  const openAddRoomModal = () => {
+  const doOpenAddRoomModal = () => {
     setEditingRoom(null);
     setRoomNumberInput("");
     setRoomBlockInput("Block A");
@@ -154,13 +177,34 @@ export default function HostelsPage() {
     setIsRoomModalOpen(true);
   };
 
-  const openEditRoomModal = (r: Room) => {
+  const openAddRoomModal = () => {
+    requireAuth(
+      () => doOpenAddRoomModal(),
+      "You must sign in with authorized Warden credentials to register resident rooms."
+    );
+  };
+
+  const doOpenEditRoomModal = (r: Room) => {
     setEditingRoom(r);
     setRoomNumberInput(r.room_number);
     setRoomHostelIdInput(r.hostel_id);
     setRoomBlockInput(r.block);
     setRoomFloorInput(r.floor || "");
     setIsRoomModalOpen(true);
+  };
+
+  const openEditRoomModal = (r: Room) => {
+    requireAuth(
+      () => doOpenEditRoomModal(r),
+      `You must sign in with authorized Warden credentials to edit Room ${r.room_number}.`
+    );
+  };
+
+  const promptDeleteRoom = (r: Room) => {
+    requireAuth(
+      () => setDeletingRoom(r),
+      `You must sign in with authorized Warden credentials to delete Room ${r.room_number}.`
+    );
   };
 
   const handleSaveRoom = async (e: React.FormEvent) => {
@@ -375,7 +419,7 @@ export default function HostelsPage() {
                         <span>Rename</span>
                       </button>
                       <button
-                        onClick={() => setDeletingHostel(h)}
+                        onClick={() => promptDeleteHostel(h)}
                         className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-rose-50 text-slate-700 hover:text-rose-600 border border-slate-200 text-xs font-semibold transition-colors"
                       >
                         <Trash2 className="w-3 h-3" />
@@ -495,7 +539,7 @@ export default function HostelsPage() {
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
                             <button
-                              onClick={() => setDeletingRoom(r)}
+                              onClick={() => promptDeleteRoom(r)}
                               className="p-2 rounded-xl bg-slate-50 hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 transition-colors"
                               title="Delete Room"
                             >

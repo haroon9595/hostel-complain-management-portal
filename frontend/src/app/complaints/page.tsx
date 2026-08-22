@@ -34,8 +34,10 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 
 export default function ComplaintsPage() {
+  const { requireAuth, user } = useAuth();
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [hostels, setHostels] = useState<Hostel[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -130,7 +132,7 @@ export default function ComplaintsPage() {
     }
   };
 
-  const handleInlineStatusChange = async (
+  const executeInlineStatusChange = async (
     complaintId: number,
     statusId: number
   ) => {
@@ -138,7 +140,7 @@ export default function ComplaintsPage() {
       await api.updateComplaintStatus(
         complaintId,
         statusId,
-        "Management Admin",
+        user?.name || "Management Admin",
         "Quick inline status update"
       );
       showToast(`Ticket #${complaintId} status updated!`);
@@ -152,14 +154,24 @@ export default function ComplaintsPage() {
     }
   };
 
-  const handleUpdateStatusInModal = async () => {
+  const handleInlineStatusChange = (
+    complaintId: number,
+    statusId: number
+  ) => {
+    requireAuth(
+      () => executeInlineStatusChange(complaintId, statusId),
+      `You must sign in with authorized RT / Warden credentials to update status of Ticket #${complaintId}.`
+    );
+  };
+
+  const executeUpdateStatusInModal = async () => {
     if (!detailModal) return;
     setSubmittingAction(true);
     try {
       const updated = await api.updateComplaintStatus(
         detailModal.complaint_id,
         updateStatusId,
-        "Management Admin",
+        user?.name || "Management Admin",
         statusNote || undefined
       );
       setDetailModal(updated);
@@ -173,7 +185,15 @@ export default function ComplaintsPage() {
     }
   };
 
-  const handleAssignStaffInModal = async (staffId: number) => {
+  const handleUpdateStatusInModal = () => {
+    if (!detailModal) return;
+    requireAuth(
+      () => executeUpdateStatusInModal(),
+      `You must sign in with authorized RT / Warden credentials to update Ticket #${detailModal.complaint_id}.`
+    );
+  };
+
+  const executeAssignStaffInModal = async (staffId: number) => {
     if (!detailModal) return;
     setSubmittingAction(true);
     try {
@@ -192,15 +212,22 @@ export default function ComplaintsPage() {
     }
   };
 
-  const handleAddInternalNote = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAssignStaffInModal = (staffId: number) => {
+    if (!detailModal) return;
+    requireAuth(
+      () => executeAssignStaffInModal(staffId),
+      "You must sign in with authorized RT / Warden credentials to assign staff members."
+    );
+  };
+
+  const executeAddInternalNote = async () => {
     if (!detailModal || !newInternalNote.trim()) return;
 
     setSubmittingAction(true);
     try {
       await api.addComplaintNote(
         detailModal.complaint_id,
-        "Management Admin",
+        user?.name || "Management Admin",
         newInternalNote.trim()
       );
       setNewInternalNote("");
@@ -213,6 +240,15 @@ export default function ComplaintsPage() {
     } finally {
       setSubmittingAction(false);
     }
+  };
+
+  const handleAddInternalNote = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!detailModal || !newInternalNote.trim()) return;
+    requireAuth(
+      () => executeAddInternalNote(),
+      "You must sign in with authorized RT / Warden credentials to append internal notes."
+    );
   };
 
   const handleResetFilters = () => {

@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { SidebarProvider } from "@/context/SidebarContext";
+import { AuthProvider } from "@/context/AuthContext";
 import { AppShell } from "@/components/AppShell";
+import { AuthModal } from "@/components/auth/AuthModal";
 
 export const metadata: Metadata = {
   title: "Hostel Complaint Management System",
@@ -16,9 +18,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-slate-50 text-slate-900 min-h-screen antialiased overflow-x-hidden">
-        <SidebarProvider>
-          <AppShell>{children}</AppShell>
-        </SidebarProvider>
+        <AuthProvider>
+          <SidebarProvider>
+            <AppShell>{children}</AppShell>
+            <AuthModal />
+          </SidebarProvider>
+        </AuthProvider>
       </body>
     </html>
   );
