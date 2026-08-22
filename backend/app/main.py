@@ -1,13 +1,15 @@
 import os
 import logging
+import traceback
 from datetime import datetime, timedelta
 from typing import List, Optional
 import httpx
-from fastapi import FastAPI, Depends, HTTPException, Query, status, BackgroundTasks
+from fastapi import FastAPI, Depends, HTTPException, Query, status, BackgroundTasks, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, OperationalError
 
 from app.database import get_db
 from app.models import (
@@ -102,6 +104,19 @@ async def normalize_api_paths(request, call_next):
 @app.get("/api/health")
 def health_check():
     return {"status": "ok", "service": "Hostel Complaint Management API"}
+
+
+@app.exception_handler(SQLAlchemyError)
+async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError):
+    logger.error("SQLAlchemy Database Error on [%s %s]:\n%s", request.method, request.url.path, traceback.format_exc())
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={
+            "detail": f"Database operation failed ({type(exc).__name__}): {str(exc)}",
+            "path": request.url.path,
+        },
+    )
+
 
 
 
