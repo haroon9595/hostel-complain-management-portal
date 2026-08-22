@@ -34,7 +34,8 @@ export const Sidebar: React.FC = () => {
       {isMobileOpen && (
         <div
           onClick={closeMobileSidebar}
-          className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-xs lg:hidden transition-opacity duration-300 animate-in fade-in"
+          className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs lg:hidden transition-opacity duration-300 animate-in fade-in"
+          aria-hidden="true"
         />
       )}
 
@@ -44,7 +45,7 @@ export const Sidebar: React.FC = () => {
           "border-r border-slate-200 bg-white flex flex-col h-screen fixed left-0 top-0 z-50 shadow-sm transition-all duration-300 ease-in-out",
           // Mobile state
           isMobileOpen
-            ? "translate-x-0 w-72"
+            ? "translate-x-0 w-72 max-w-[85vw]"
             : "-translate-x-full lg:translate-x-0",
           // Desktop width state
           isCollapsed ? "lg:w-20" : "lg:w-64"
@@ -77,19 +78,21 @@ export const Sidebar: React.FC = () => {
           {!isCollapsed && (
             <button
               onClick={toggleSidebar}
-              className="hidden lg:flex p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+              className="hidden lg:flex p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
               title="Collapse Sidebar"
+              aria-label="Collapse Sidebar"
             >
               <PanelLeftClose className="w-4 h-4" />
             </button>
           )}
 
-          {/* Mobile Close Button */}
+          {/* Mobile Close Button (44px min touch target) */}
           <button
             onClick={closeMobileSidebar}
-            className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+            className="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 active:bg-slate-200 transition-colors"
+            aria-label="Close navigation drawer"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -100,6 +103,7 @@ export const Sidebar: React.FC = () => {
               onClick={toggleSidebar}
               className="p-2 rounded-xl text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
               title="Expand Sidebar"
+              aria-label="Expand Sidebar"
             >
               <PanelLeftOpen className="w-4 h-4" />
             </button>
@@ -107,7 +111,7 @@ export const Sidebar: React.FC = () => {
         )}
 
         {/* Navigation Links */}
-        <div className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto overflow-x-hidden">
+        <div className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto overflow-x-hidden touch-scroll">
           {(!isCollapsed || isMobileOpen) && (
             <div className="px-3 pb-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider animate-in fade-in duration-150">
               Management
@@ -127,13 +131,13 @@ export const Sidebar: React.FC = () => {
                 href={item.href}
                 onClick={() => isMobileOpen && closeMobileSidebar()}
                 className={cn(
-                  "flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-150 group relative",
+                  "flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-150 group relative min-h-[44px]",
                   isCollapsed && !isMobileOpen
                     ? "px-0 py-3 justify-center"
-                    : "px-3 py-2.5",
+                    : "px-3.5 py-2.5",
                   isActive
                     ? "bg-indigo-50 text-indigo-700 font-semibold border border-indigo-100/80 shadow-xs"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50 active:bg-slate-100"
                 )}
                 title={isCollapsed ? item.name : undefined}
               >
@@ -146,7 +150,7 @@ export const Sidebar: React.FC = () => {
                   )}
                 />
                 {(!isCollapsed || isMobileOpen) && (
-                  <span className="whitespace-nowrap overflow-hidden animate-in fade-in duration-200">
+                  <span className="whitespace-nowrap overflow-hidden animate-in fade-in duration-200 text-xs sm:text-sm">
                     {item.name}
                   </span>
                 )}
