@@ -297,7 +297,7 @@ export default function HostelsPage() {
         </div>
       )}
 
-      <main className="p-3.5 sm:p-6 lg:p-8 space-y-5 sm:space-y-6 max-w-[1600px] w-full mx-auto">
+      <main className="p-3.5 sm:p-6 lg:p-8 space-y-5 sm:space-y-6 max-w-full lg:max-w-7xl xl:max-w-[1600px] w-full mx-auto min-w-0">
         {/* Navigation Tabs & Actions */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 border-b border-slate-200 pb-4">
           <div className="flex items-center gap-1.5 sm:gap-2 bg-white p-1 rounded-2xl border border-slate-200 shadow-2xs w-full sm:w-auto">

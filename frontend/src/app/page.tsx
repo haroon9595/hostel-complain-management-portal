@@ -16,7 +16,7 @@ import {
   Staff,
   Hostel,
 } from "@/lib/types";
-import { Check, ArrowRight, Search, SlidersHorizontal } from "lucide-react";
+import { Check, ArrowRight, Search } from "lucide-react";
 import Link from "next/link";
 
 export default function DashboardPage() {
@@ -133,7 +133,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <main className="p-3.5 sm:p-6 lg:p-8 space-y-5 sm:space-y-6 max-w-[1600px] w-full mx-auto">
+      <main className="p-3.5 sm:p-6 lg:p-8 space-y-5 sm:space-y-6 max-w-full lg:max-w-7xl xl:max-w-[1600px] w-full mx-auto min-w-0">
         {/* Top Header Banner */}
         <div className="flex flex-col gap-1 pb-1">
           <h2 className="text-lg sm:text-xl md:text-2xl font-extrabold text-slate-900 tracking-tight">
@@ -144,10 +144,10 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* Core Layout Grid: Left (Analytics 2x2) & Right (Ticket Drawer) */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6 items-start">
-          {/* Left & Center: 2x2 Analytics Grid */}
-          <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+        {/* Core Layout Grid: Desktop 12-col split (Middle Charts 7-8 cols, Right Drawer 5-4 cols) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-start w-full min-w-0">
+          {/* Middle Analytics Section (2x2 Grid) */}
+          <div className="col-span-12 lg:col-span-7 xl:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 min-w-0">
             {/* 1. Total Complaints Card */}
             <WeeklyTrendChart
               totalCount={analytics?.total_complaints_count ?? 0}
@@ -175,8 +175,11 @@ export default function DashboardPage() {
             />
           </div>
 
-          {/* Right Panel: Detailed Ticket Drawer */}
-          <div id="ticket-detail-panel-section" className="lg:col-span-1 h-full w-full">
+          {/* Right Detail Panel: Ticket Drawer */}
+          <div
+            id="ticket-detail-panel-section"
+            className="col-span-12 lg:col-span-5 xl:col-span-4 h-full w-full min-w-0 lg:sticky lg:top-20"
+          >
             <TicketDetailPanel
               complaint={selectedComplaint}
               staffList={staffList}
@@ -187,7 +190,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Bottom Section: Recent Complaints Directory */}
-        <div className="space-y-4 pt-4 border-t border-slate-200 w-full">
+        <div className="space-y-4 pt-4 border-t border-slate-200 w-full min-w-0">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h3 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">

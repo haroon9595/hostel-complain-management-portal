@@ -38,11 +38,11 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
       {/* Fixed Sidebar for Desktop & Mobile Drawer */}
       <Sidebar />
 
-      {/* Main Content Area */}
+      {/* Main Content Area: uses lg:pl-64 / lg:pl-20 so w-full accurately spans viewport without right edge clipping */}
       <div
         className={cn(
-          "flex-1 flex flex-col min-h-screen bg-slate-50 transition-all duration-300 ease-in-out w-full pb-20 lg:pb-0",
-          isCollapsed ? "lg:ml-20" : "lg:ml-64"
+          "flex-1 flex flex-col min-h-screen bg-slate-50 transition-all duration-300 ease-in-out w-full pb-20 lg:pb-0 min-w-0 max-w-full overflow-x-hidden",
+          isCollapsed ? "lg:pl-20" : "lg:pl-64"
         )}
       >
         {children}

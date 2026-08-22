@@ -284,7 +284,7 @@ export default function ComplaintsPage() {
         </div>
       )}
 
-      <main className="p-3.5 sm:p-6 lg:p-8 space-y-5 sm:space-y-6 max-w-[1600px] w-full mx-auto">
+      <main className="p-3.5 sm:p-6 lg:p-8 space-y-5 sm:space-y-6 max-w-full lg:max-w-7xl xl:max-w-[1600px] w-full mx-auto min-w-0">
         {/* Page Title & Stats Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
           <div>
