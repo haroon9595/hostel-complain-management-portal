@@ -1,6 +1,4 @@
 {
-  "framework": "nextjs",
-  "cleanUrls": true,
   "rewrites": [
     {
       "source": "/api/py/:path*",

@@ -17,11 +17,15 @@ import {
   StaffUpdatePayload,
 } from "./types";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+/**
+ * Base URL for FastAPI Backend routed through Vercel Serverless Function (/api/py)
+ * Defaults to '/api/py' for seamless serverless execution alongside Next.js.
+ */
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api/py";
 
 async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const url = `${API_BASE_URL}${endpoint}`;
+  const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+  const url = `${API_BASE_URL}${cleanEndpoint}`;
   const headers = {
     "Content-Type": "application/json",
     ...(options?.headers || {}),
@@ -54,17 +58,17 @@ async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
 
 export const api = {
   // Health
-  checkHealth: () => request<{ status: string }>("/health"),
+  checkHealth: () => request<{ status: string; service?: string }>("/health"),
 
   // Dashboard Stats & Analytics Overview
   getDashboardStats: (hostelId?: number) => {
     const query = hostelId ? `?hostel_id=${hostelId}` : "";
-    return request<DashboardStats>(`/api/dashboard/stats${query}`);
+    return request<DashboardStats>(`/dashboard/stats${query}`);
   },
 
   getAnalyticsOverview: (hostelId?: number) => {
     const query = hostelId ? `?hostel_id=${hostelId}` : "";
-    return request<AnalyticsOverview>(`/api/analytics/overview${query}`);
+    return request<AnalyticsOverview>(`/analytics/overview${query}`);
   },
 
   // Complaints
@@ -83,11 +87,11 @@ export const api = {
     if (params?.search) searchParams.set("search", params.search);
 
     const queryString = searchParams.toString();
-    return request<Complaint[]>(`/api/complaints${queryString ? `?${queryString}` : ""}`);
+    return request<Complaint[]>(`/complaints${queryString ? `?${queryString}` : ""}`);
   },
 
   getComplaintById: (complaintId: number) =>
-    request<ComplaintDetail>(`/api/complaints/${complaintId}`),
+    request<ComplaintDetail>(`/complaints/${complaintId}`),
 
   updateComplaintStatus: (
     complaintId: number,
@@ -95,7 +99,7 @@ export const api = {
     changedBy?: string,
     note?: string
   ) =>
-    request<ComplaintDetail>(`/api/complaints/${complaintId}/status`, {
+    request<ComplaintDetail>(`/complaints/${complaintId}/status`, {
       method: "PATCH",
       body: JSON.stringify({
         status_id: statusId,
@@ -105,7 +109,7 @@ export const api = {
     }),
 
   assignComplaintStaff: (complaintId: number, staffId: number) =>
-    request<ComplaintDetail>(`/api/complaints/${complaintId}/assign`, {
+    request<ComplaintDetail>(`/complaints/${complaintId}/assign`, {
       method: "PATCH",
       body: JSON.stringify({
         assigned_staff_id: staffId,
@@ -113,7 +117,7 @@ export const api = {
     }),
 
   addComplaintNote: (complaintId: number, author: string, note: string) =>
-    request<{ status: string; message: string }>(`/api/complaints/${complaintId}/notes`, {
+    request<{ status: string; message: string }>(`/complaints/${complaintId}/notes`, {
       method: "POST",
       body: JSON.stringify({
         author,
@@ -122,7 +126,7 @@ export const api = {
     }),
 
   getComplaintHistory: (complaintId: number) =>
-    request<any[]>(`/api/complaints/${complaintId}/history`),
+    request<any[]>(`/complaints/${complaintId}/history`),
 
   // Staff CRUD
   getStaffMembers: (params?: {
@@ -136,71 +140,71 @@ export const api = {
     if (params?.is_active !== undefined) searchParams.set("is_active", String(params.is_active));
 
     const queryString = searchParams.toString();
-    return request<Staff[]>(`/api/staff${queryString ? `?${queryString}` : ""}`);
+    return request<Staff[]>(`/staff${queryString ? `?${queryString}` : ""}`);
   },
 
   createStaffMember: (payload: StaffCreatePayload) =>
-    request<Staff>("/api/staff", {
+    request<Staff>("/staff", {
       method: "POST",
       body: JSON.stringify(payload),
     }),
 
   updateStaffMember: (staffId: number, payload: StaffUpdatePayload) =>
-    request<Staff>(`/api/staff/${staffId}`, {
+    request<Staff>(`/staff/${staffId}`, {
       method: "PUT",
       body: JSON.stringify(payload),
     }),
 
   deleteStaffMember: (staffId: number) =>
-    request<{ status: string; message: string }>(`/api/staff/${staffId}`, {
+    request<{ status: string; message: string }>(`/staff/${staffId}`, {
       method: "DELETE",
     }),
 
   // Hostels CRUD
-  getHostels: () => request<Hostel[]>("/api/hostels"),
+  getHostels: () => request<Hostel[]>("/hostels"),
 
   createHostel: (payload: HostelCreatePayload) =>
-    request<Hostel>("/api/hostels", {
+    request<Hostel>("/hostels", {
       method: "POST",
       body: JSON.stringify(payload),
     }),
 
   updateHostel: (hostelId: number, payload: HostelUpdatePayload) =>
-    request<Hostel>(`/api/hostels/${hostelId}`, {
+    request<Hostel>(`/hostels/${hostelId}`, {
       method: "PUT",
       body: JSON.stringify(payload),
     }),
 
   deleteHostel: (hostelId: number) =>
-    request<{ status: string; message: string }>(`/api/hostels/${hostelId}`, {
+    request<{ status: string; message: string }>(`/hostels/${hostelId}`, {
       method: "DELETE",
     }),
 
   // Rooms CRUD
   getRooms: (hostelId?: number) => {
     const query = hostelId ? `?hostel_id=${hostelId}` : "";
-    return request<Room[]>(`/api/rooms${query}`);
+    return request<Room[]>(`/rooms${query}`);
   },
 
   createRoom: (payload: RoomCreatePayload) =>
-    request<Room>("/api/rooms", {
+    request<Room>("/rooms", {
       method: "POST",
       body: JSON.stringify(payload),
     }),
 
   updateRoom: (roomId: number, payload: RoomUpdatePayload) =>
-    request<Room>(`/api/rooms/${roomId}`, {
+    request<Room>(`/rooms/${roomId}`, {
       method: "PUT",
       body: JSON.stringify(payload),
     }),
 
   deleteRoom: (roomId: number) =>
-    request<{ status: string; message: string }>(`/api/rooms/${roomId}`, {
+    request<{ status: string; message: string }>(`/rooms/${roomId}`, {
       method: "DELETE",
     }),
 
   // Lookups
-  getCategories: () => request<Category[]>("/api/categories"),
-  getStatuses: () => request<Status[]>("/api/statuses"),
-  getPriorities: () => request<Priority[]>("/api/priorities"),
+  getCategories: () => request<Category[]>("/categories"),
+  getStatuses: () => request<Status[]>("/statuses"),
+  getPriorities: () => request<Priority[]>("/priorities"),
 };

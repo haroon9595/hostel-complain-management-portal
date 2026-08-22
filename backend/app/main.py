@@ -53,7 +53,11 @@ from app.schemas import (
 
 logger = logging.getLogger("uvicorn.error")
 
-app = FastAPI(title="Hostel Complaint Management System API")
+app = FastAPI(
+    title="Hostel Complaint Management System API",
+    docs_url="/docs",
+    openapi_url="/openapi.json",
+)
 
 # Enable CORS for Next.js frontend integration
 app.add_middleware(
@@ -65,9 +69,31 @@ app.add_middleware(
 )
 
 
+@app.middleware("http")
+async def normalize_api_paths(request, call_next):
+    """Normalize /api/py, /api, and root paths so all Vercel and local routes match smoothly."""
+    path = request.scope.get("path", "")
+    if path.startswith("/api/py"):
+        normalized = path[len("/api/py") :] or "/"
+        if not normalized.startswith("/api") and normalized not in (
+            "/health",
+            "/docs",
+            "/openapi.json",
+            "/redoc",
+            "/",
+        ):
+            normalized = f"/api{normalized}"
+        request.scope["path"] = normalized
+
+    return await call_next(request)
+
+
+@app.get("/")
 @app.get("/health")
+@app.get("/api/health")
 def health_check():
-    return {"status": "ok"}
+    return {"status": "ok", "service": "Hostel Complaint Management API"}
+
 
 
 # -----------------------------------------------------------------------------
