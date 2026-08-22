@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
+import Link from "next/link";
 import {
   Building2,
   RefreshCw,
@@ -162,13 +163,13 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
 
             {/* Staff Sign In Button */}
-            <button
-              onClick={() => openAuthModal()}
+            <Link
+              href="/login"
               className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 whitespace-nowrap"
             >
               <Lock className="w-3.5 h-3.5" />
               <span>Staff Sign In</span>
-            </button>
+            </Link>
           </div>
         ) : (
           /* Logged In Admin Profile Dropdown */
