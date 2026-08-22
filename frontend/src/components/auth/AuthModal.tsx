@@ -3,23 +3,24 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import {
-  Lock,
+  Shield,
   X,
   Mail,
+  Lock,
   ArrowRight,
   AlertCircle,
   Loader2,
   Eye,
   EyeOff,
-  ShieldCheck,
+  ShieldAlert,
 } from "lucide-react";
 
 /**
  * Maps raw backend/network errors to human-friendly, clean UI messages.
- * Prevents exposing technical stack traces, CORS errors, or raw database keys.
+ * Never exposes raw API, network stack, or database error text.
  */
 function getHumanReadableAuthError(err: any): string {
-  if (!err) return "Unable to authenticate at this time. Please try again.";
+  if (!err) return "Incorrect email or password.";
   const raw = (typeof err === "string" ? err : err.message || "").toLowerCase();
 
   if (
@@ -28,13 +29,18 @@ function getHumanReadableAuthError(err: any): string {
     raw.includes("invalid credentials") ||
     raw.includes("user not found") ||
     raw.includes("incorrect") ||
+    raw.includes("bad credentials") ||
     raw.includes("400")
   ) {
-    return "Authentication failed. Incorrect email or password.";
+    return "Incorrect email or password.";
   }
 
   if (raw.includes("email not confirmed") || raw.includes("unconfirmed")) {
     return "Your staff account email has not been verified yet. Please check your inbox.";
+  }
+
+  if (raw.includes("too many requests") || raw.includes("rate limit") || raw.includes("429")) {
+    return "Too many failed attempts. Please wait a moment and try again.";
   }
 
   if (
@@ -47,7 +53,7 @@ function getHumanReadableAuthError(err: any): string {
     return "Unable to connect to authentication service. Please check your internet connection.";
   }
 
-  return "Unable to authenticate at this time. Please try again.";
+  return "Incorrect email or password.";
 }
 
 export const AuthModal: React.FC = () => {
@@ -75,7 +81,7 @@ export const AuthModal: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanEmail = email.trim();
-    const cleanPass = password.trim();
+    const cleanPass = password;
 
     // Client-side pre-validation
     if (!cleanEmail) {
@@ -97,7 +103,7 @@ export const AuthModal: React.FC = () => {
       setPassword("");
       setShowPassword(false);
     } catch (err: any) {
-      console.error("Staff authentication exception:", err);
+      console.error("Staff authentication error:", err);
       setError(getHumanReadableAuthError(err));
     } finally {
       setLoading(false);
@@ -115,31 +121,31 @@ export const AuthModal: React.FC = () => {
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200"
       onClick={handleClose}
       role="dialog"
       aria-modal="true"
-      aria-labelledby="auth-modal-title"
+      aria-labelledby="staff-auth-modal-title"
     >
       <div
-        className="bg-white border border-slate-200/80 rounded-3xl w-full max-w-[420px] shadow-2xl shadow-slate-900/10 overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col transition-all"
+        className="relative bg-white rounded-2xl sm:rounded-3xl border border-slate-200/90 shadow-2xl shadow-slate-950/20 overflow-hidden flex flex-col w-full max-w-[420px] animate-in zoom-in-95 duration-200 transition-all"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Elegant Top Header Section */}
-        <div className="px-6 pt-6 pb-4 flex items-start justify-between border-b border-slate-100 bg-gradient-to-b from-slate-50/70 to-white">
+        {/* Header: Icon + Title + Subtitle + Close Button */}
+        <div className="px-6 pt-6 pb-4 flex items-start justify-between border-b border-slate-100 bg-gradient-to-b from-slate-50/60 to-white">
           <div className="flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100/80 flex items-center justify-center text-indigo-600 shadow-2xs flex-shrink-0">
-              <Lock className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-50 to-indigo-100/70 border border-indigo-100 flex items-center justify-center text-indigo-600 shadow-2xs flex-shrink-0">
+              <Shield className="w-5 h-5" />
             </div>
             <div>
               <h3
-                id="auth-modal-title"
+                id="staff-auth-modal-title"
                 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight"
               >
                 Staff Authentication
               </h3>
               <p className="text-xs text-slate-500 font-medium mt-0.5">
-                Supabase Verified Staff Access
+                Hostel Administration & Resident Tutor Portal
               </p>
             </div>
           </div>
@@ -157,66 +163,73 @@ export const AuthModal: React.FC = () => {
 
         {/* Modal Body */}
         <div className="p-6 space-y-4">
-          {/* Security Notice / Action Restricted Banner */}
-          <div className="p-3 rounded-2xl bg-amber-50/90 border border-amber-200/70 flex items-start gap-2.5 text-xs text-amber-900">
-            <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-            <div className="leading-snug">
-              <span className="font-bold text-amber-950 block">Action Restricted</span>
-              <p className="mt-0.5 text-amber-800 font-medium">
-                {authModalReason ||
-                  "You must sign in with authorized RT / Warden credentials to modify complaint records."}
-              </p>
-            </div>
+          {/* Notice Banner */}
+          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center gap-2.5 text-xs text-slate-600">
+            <ShieldAlert className="w-4 h-4 text-slate-400 flex-shrink-0" />
+            <p className="leading-tight font-medium">
+              {authModalReason || "Staff authorization required to modify records"}
+            </p>
           </div>
 
-          {/* Clean Inline Error Banner */}
+          {/* Inline Error Banner */}
           {error && (
-            <div className="p-3 rounded-2xl bg-rose-50 border border-rose-200/80 text-xs font-semibold text-rose-700 flex items-start gap-2.5 animate-in fade-in duration-150">
-              <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
-              <div className="leading-snug">
-                <span className="font-bold text-rose-950 block">Authentication Failed</span>
-                <span className="text-rose-700 font-normal">{error}</span>
-              </div>
+            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs font-medium text-red-700 flex items-start gap-2.5 animate-in fade-in duration-150">
+              <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+              <div className="leading-snug">{error}</div>
             </div>
           )}
 
-          {/* Authentication Form */}
+          {/* Form Fields */}
           <form onSubmit={handleSubmit} className="space-y-3.5">
-            {/* Email Field */}
+            {/* University Email Field */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700 block">
-                Staff Email Address
+              <label
+                htmlFor="staff-modal-email"
+                className="text-xs font-semibold text-slate-700 block"
+              >
+                Official University Email
               </label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
+                  id="staff-modal-email"
                   type="email"
                   required
                   disabled={loading}
                   placeholder="name@hostel.edu.pk"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full h-[48px] bg-slate-50/70 border border-slate-200 rounded-xl pl-10 pr-3.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 shadow-2xs transition-all disabled:opacity-50"
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (error) setError(null);
+                  }}
+                  className="w-full h-11 bg-slate-50/70 border border-slate-200 rounded-xl pl-10 pr-3.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-600 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all disabled:opacity-50"
                   autoFocus
                 />
               </div>
             </div>
 
-            {/* Password Field */}
+            {/* Access Password Field */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700 block">
-                Password
+              <label
+                htmlFor="staff-modal-password"
+                className="text-xs font-semibold text-slate-700 block"
+              >
+                Access Password
               </label>
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
+                  id="staff-modal-password"
                   type={showPassword ? "text" : "password"}
                   required
                   disabled={loading}
                   placeholder="••••••••••••"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full h-[48px] bg-slate-50/70 border border-slate-200 rounded-xl pl-10 pr-10 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 shadow-2xs transition-all disabled:opacity-50"
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (error) setError(null);
+                  }}
+                  className="w-full h-11 bg-slate-50/70 border border-slate-200 rounded-xl pl-10 pr-10 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-600 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all disabled:opacity-50"
                 />
                 <button
                   type="button"
@@ -225,6 +238,7 @@ export const AuthModal: React.FC = () => {
                   tabIndex={-1}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 rounded-lg transition-colors focus:outline-none"
                   title={showPassword ? "Hide password" : "Show password"}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? (
                     <EyeOff className="w-4 h-4" />
@@ -235,20 +249,20 @@ export const AuthModal: React.FC = () => {
               </div>
             </div>
 
-            {/* Modal Actions */}
-            <div className="pt-3 flex items-center justify-end gap-2.5">
+            {/* Action Buttons */}
+            <div className="pt-2 flex items-center justify-end gap-2.5">
               <button
                 type="button"
                 disabled={loading}
                 onClick={handleClose}
-                className="h-10 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                className="h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-slate-300"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="h-10 px-5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="h-10 px-5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-semibold transition-all shadow-sm active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-slate-900"
               >
                 {loading ? (
                   <>
@@ -266,11 +280,10 @@ export const AuthModal: React.FC = () => {
           </form>
         </div>
 
-        {/* Subtle Security Footer */}
+        {/* Footer: Trust Badge */}
         <div className="px-6 py-3 border-t border-slate-100 bg-slate-50/50 flex items-center justify-center text-center">
           <div className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-            <span>Encrypted Session • Authorized Personnel Only</span>
+            <span>🔒 Encrypted Session · Authorized Personnel Only</span>
           </div>
         </div>
       </div>

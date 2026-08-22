@@ -60,7 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [authModalReason, setAuthModalReason] = useState<string>(
-    "You must sign in with authorized RT / Warden credentials to modify complaint records."
+    "Staff authorization required to modify records"
   );
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
 
@@ -92,7 +92,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setAuthModalReason(reason);
     } else {
       setAuthModalReason(
-        "You must sign in with authorized RT / Warden credentials to modify complaint records."
+        "Staff authorization required to modify records"
       );
     }
     if (onAuthenticated) {
