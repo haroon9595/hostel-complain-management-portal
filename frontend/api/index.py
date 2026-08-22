@@ -1,16 +1,14 @@
 import os
 import sys
 
-# Add backend directory to sys.path
-backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "backend"))
-if not os.path.exists(backend_dir):
-    backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "backend"))
+# Ensure all possible module locations are on sys.path for Vercel execution
+current_dir = os.path.dirname(os.path.abspath(__file__))
+frontend_dir = os.path.abspath(os.path.join(current_dir, ".."))
+backend_in_frontend = os.path.join(frontend_dir, "backend")
+backend_in_root = os.path.abspath(os.path.join(frontend_dir, "..", "backend"))
 
-if backend_dir not in sys.path:
-    sys.path.insert(0, backend_dir)
-
-current_dir = os.path.abspath(os.path.dirname(__file__))
-if current_dir not in sys.path:
-    sys.path.insert(0, current_dir)
+for directory in [backend_in_frontend, frontend_dir, backend_in_root, current_dir]:
+    if os.path.exists(directory) and directory not in sys.path:
+        sys.path.insert(0, directory)
 
 from app.main import app
