@@ -18,14 +18,35 @@ import {
 } from "./types";
 
 /**
- * Base URL for FastAPI Backend routed through Vercel Serverless Function (/api/py)
- * Defaults to '/api/py' for seamless serverless execution alongside Next.js.
+ * Base URL for FastAPI Backend.
+ * Can be a live external API (e.g. Render: https://hostel-desk-api.onrender.com),
+ * local dev server (http://localhost:8000), or Vercel serverless proxy (/api/py).
  */
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api/py";
+const RAW_API_URL = process.env.NEXT_PUBLIC_API_URL || "";
+const API_BASE_URL = RAW_API_URL.endsWith("/")
+  ? RAW_API_URL.slice(0, -1)
+  : RAW_API_URL;
+
+/**
+ * Resolves full URL while guaranteeing correct router prefix (/api) without duplicate slashes or prefixes.
+ */
+function resolveUrl(endpoint: string): string {
+  const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+
+  if (!API_BASE_URL) {
+    return cleanEndpoint;
+  }
+
+  // If API_BASE_URL already ends with /api and cleanEndpoint starts with /api/, avoid duplicate /api/api/
+  if (API_BASE_URL.endsWith("/api") && cleanEndpoint.startsWith("/api/")) {
+    return `${API_BASE_URL}${cleanEndpoint.slice(4)}`;
+  }
+
+  return `${API_BASE_URL}${cleanEndpoint}`;
+}
 
 async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
-  const url = `${API_BASE_URL}${cleanEndpoint}`;
+  const url = resolveUrl(endpoint);
   const headers = {
     "Content-Type": "application/json",
     ...(options?.headers || {}),
@@ -63,12 +84,12 @@ export const api = {
   // Dashboard Stats & Analytics Overview
   getDashboardStats: (hostelId?: number) => {
     const query = hostelId ? `?hostel_id=${hostelId}` : "";
-    return request<DashboardStats>(`/dashboard/stats${query}`);
+    return request<DashboardStats>(`/api/dashboard/stats${query}`);
   },
 
   getAnalyticsOverview: (hostelId?: number) => {
     const query = hostelId ? `?hostel_id=${hostelId}` : "";
-    return request<AnalyticsOverview>(`/analytics/overview${query}`);
+    return request<AnalyticsOverview>(`/api/analytics/overview${query}`);
   },
 
   // Complaints
@@ -87,11 +108,11 @@ export const api = {
     if (params?.search) searchParams.set("search", params.search);
 
     const queryString = searchParams.toString();
-    return request<Complaint[]>(`/complaints${queryString ? `?${queryString}` : ""}`);
+    return request<Complaint[]>(`/api/complaints${queryString ? `?${queryString}` : ""}`);
   },
 
   getComplaintById: (complaintId: number) =>
-    request<ComplaintDetail>(`/complaints/${complaintId}`),
+    request<ComplaintDetail>(`/api/complaints/${complaintId}`),
 
   updateComplaintStatus: (
     complaintId: number,
@@ -99,7 +120,7 @@ export const api = {
     changedBy?: string,
     note?: string
   ) =>
-    request<ComplaintDetail>(`/complaints/${complaintId}/status`, {
+    request<ComplaintDetail>(`/api/complaints/${complaintId}/status`, {
       method: "PATCH",
       body: JSON.stringify({
         status_id: statusId,
@@ -109,7 +130,7 @@ export const api = {
     }),
 
   assignComplaintStaff: (complaintId: number, staffId: number) =>
-    request<ComplaintDetail>(`/complaints/${complaintId}/assign`, {
+    request<ComplaintDetail>(`/api/complaints/${complaintId}/assign`, {
       method: "PATCH",
       body: JSON.stringify({
         assigned_staff_id: staffId,
@@ -117,7 +138,7 @@ export const api = {
     }),
 
   addComplaintNote: (complaintId: number, author: string, note: string) =>
-    request<{ status: string; message: string }>(`/complaints/${complaintId}/notes`, {
+    request<{ status: string; message: string }>(`/api/complaints/${complaintId}/notes`, {
       method: "POST",
       body: JSON.stringify({
         author,
@@ -126,7 +147,7 @@ export const api = {
     }),
 
   getComplaintHistory: (complaintId: number) =>
-    request<any[]>(`/complaints/${complaintId}/history`),
+    request<any[]>(`/api/complaints/${complaintId}/history`),
 
   // Staff CRUD
   getStaffMembers: (params?: {
@@ -140,71 +161,71 @@ export const api = {
     if (params?.is_active !== undefined) searchParams.set("is_active", String(params.is_active));
 
     const queryString = searchParams.toString();
-    return request<Staff[]>(`/staff${queryString ? `?${queryString}` : ""}`);
+    return request<Staff[]>(`/api/staff${queryString ? `?${queryString}` : ""}`);
   },
 
   createStaffMember: (payload: StaffCreatePayload) =>
-    request<Staff>("/staff", {
+    request<Staff>("/api/staff", {
       method: "POST",
       body: JSON.stringify(payload),
     }),
 
   updateStaffMember: (staffId: number, payload: StaffUpdatePayload) =>
-    request<Staff>(`/staff/${staffId}`, {
+    request<Staff>(`/api/staff/${staffId}`, {
       method: "PUT",
       body: JSON.stringify(payload),
     }),
 
   deleteStaffMember: (staffId: number) =>
-    request<{ status: string; message: string }>(`/staff/${staffId}`, {
+    request<{ status: string; message: string }>(`/api/staff/${staffId}`, {
       method: "DELETE",
     }),
 
   // Hostels CRUD
-  getHostels: () => request<Hostel[]>("/hostels"),
+  getHostels: () => request<Hostel[]>("/api/hostels"),
 
   createHostel: (payload: HostelCreatePayload) =>
-    request<Hostel>("/hostels", {
+    request<Hostel>("/api/hostels", {
       method: "POST",
       body: JSON.stringify(payload),
     }),
 
   updateHostel: (hostelId: number, payload: HostelUpdatePayload) =>
-    request<Hostel>(`/hostels/${hostelId}`, {
+    request<Hostel>(`/api/hostels/${hostelId}`, {
       method: "PUT",
       body: JSON.stringify(payload),
     }),
 
   deleteHostel: (hostelId: number) =>
-    request<{ status: string; message: string }>(`/hostels/${hostelId}`, {
+    request<{ status: string; message: string }>(`/api/hostels/${hostelId}`, {
       method: "DELETE",
     }),
 
   // Rooms CRUD
   getRooms: (hostelId?: number) => {
     const query = hostelId ? `?hostel_id=${hostelId}` : "";
-    return request<Room[]>(`/rooms${query}`);
+    return request<Room[]>(`/api/rooms${query}`);
   },
 
   createRoom: (payload: RoomCreatePayload) =>
-    request<Room>("/rooms", {
+    request<Room>("/api/rooms", {
       method: "POST",
       body: JSON.stringify(payload),
     }),
 
   updateRoom: (roomId: number, payload: RoomUpdatePayload) =>
-    request<Room>(`/rooms/${roomId}`, {
+    request<Room>(`/api/rooms/${roomId}`, {
       method: "PUT",
       body: JSON.stringify(payload),
     }),
 
   deleteRoom: (roomId: number) =>
-    request<{ status: string; message: string }>(`/rooms/${roomId}`, {
+    request<{ status: string; message: string }>(`/api/rooms/${roomId}`, {
       method: "DELETE",
     }),
 
   // Lookups
-  getCategories: () => request<Category[]>("/categories"),
-  getStatuses: () => request<Status[]>("/statuses"),
-  getPriorities: () => request<Priority[]>("/priorities"),
+  getCategories: () => request<Category[]>("/api/categories"),
+  getStatuses: () => request<Status[]>("/api/statuses"),
+  getPriorities: () => request<Priority[]>("/api/priorities"),
 };

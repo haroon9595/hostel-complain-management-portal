@@ -71,7 +71,7 @@ app.add_middleware(
 
 @app.middleware("http")
 async def normalize_api_paths(request, call_next):
-    """Normalize /api/py, /api, and root paths so all Vercel and local routes match smoothly."""
+    """Normalize /api/py, /api, and root paths so all Vercel, Render, and local routes match smoothly."""
     path = request.scope.get("path", "")
     if path.startswith("/api/py"):
         normalized = path[len("/api/py") :] or "/"
@@ -84,6 +84,15 @@ async def normalize_api_paths(request, call_next):
         ):
             normalized = f"/api{normalized}"
         request.scope["path"] = normalized
+    elif not path.startswith("/api") and path not in (
+        "/health",
+        "/docs",
+        "/openapi.json",
+        "/redoc",
+        "/",
+    ):
+        # In case a client calls /complaints or /hostels directly without /api, rewrite to /api/...
+        request.scope["path"] = f"/api{path}"
 
     return await call_next(request)
 
